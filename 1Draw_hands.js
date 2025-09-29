@@ -21,15 +21,23 @@ function drawInteraction(faces, hands) {
      let pinkyFingerTipX = hand.pinky_finger_tip.x;
      let pinkyFingerTipY = hand.pinky_finger_tip.y;
 
+   
+
+
     /*
     Start drawing on the hands here
     */
 
-    fill(225, 225, 0);
-    ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
+    //fill(225, 225, 0);
+    //ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
 
     fill(40,70,90)
     ellipse(pinkyFingerTipX,pinkyFingerTipY,30,30)
+
+    //flower(indexFingerTipX,indexFingerTipY);
+
+    drawSnowflake(indexFingerTipX, indexFingerTipY, 25);
+
 
     // drawPoints(hand)
 
@@ -44,10 +52,54 @@ function drawInteraction(faces, hands) {
   // You can make addtional elements here, but keep the hand drawing inside the for loop. 
   //------------------------------------------------------
 }
+function drawSnowflake(x, y, size = 20) {
+  push();
+  translate(x, y);
+  rotate(frameCount * 0.01); // gentle spin
+
+  // glowing layers
+  stroke(180, 220, 255, 80); 
+  strokeWeight(3);
+  snowflakeArms(size * 1.1);
+
+  stroke(230, 240, 255, 200);
+  strokeWeight(1.5);
+  snowflakeArms(size);
+
+  pop();
+}
+
+function snowflakeArms(size) {
+  for (let i = 0; i < 6; i++) {
+    rotate(PI / 3);
+    line(0, 0, size, 0);
+    // branchlets
+    line(size * 0.6, -2, size * 0.9, -2);
+    line(size * 0.6,  2, size * 0.9,  2);
+  }
+}
 
 
+// function flower(x,y) {
+
+//   //stem 
+//   fill(0, 255, 0)
+//   rect(x, y, 20, 100)
+
+//   //pink petals
+//   fill(255, 10, 202)
+//   ellipse(x, y + 5, 50, 50)
+//   ellipse(x, y - 10, 50, 50)
+//   ellipse(x, y + 10, 50, 50)
+//   ellipse(x, y + 10, 50, 50)
+//   ellipse(x, y + 20, 50, 50)
+
+//   //yellow center
+//   fill(231, 255, 10)
+//   ellipse(x, y + 5, 50, 50)
 
 
+// }
 
 
 function fingerPuppet(x, y) {
