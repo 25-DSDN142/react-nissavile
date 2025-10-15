@@ -1,127 +1,103 @@
-// ----=  HANDS  =----
+// ==== Constellation (fixed + interactive size) ====
+
+let stars = [];
+let starImg = null;
+const MAX_STARS = 90;
+let frozen = false;
+let _freezeDebounce = 0;
+
 function prepareInteraction() {
-  //bgImage = loadImage('/images/background.png');
+  // optional PNG
+  starImg = loadImage('/images/star.png', () => {}, () => { starImg = null; });
 }
 
 function drawInteraction(faces, hands) {
+  // --- pick ONE hand (Right if available, else first) ---
+  const hand = hands.find(h => h.handedness === "Right") || hands[0];
+  if (!hand) return;
 
-  // hands part
-  // USING THE GESTURE DETECTORS (check their values in the debug menu)
-  // detectHandGesture(hand) returns "Pinch", "Peace", "Thumbs Up", "Pointing", "Open Palm", or "Fist"
+  // background gradient
+for (let y = 0; y < height; y++) {
+  let inter = map(y, 0, height, 0, 1);
+  let c = lerpColor(color(5, 5, 20), color(40, 30, 70), inter);
+  stroke(c);
+  line(0, y, width, y);
+}
 
-  // for loop to capture if there is more than one hand on the screen. This applies the same process to all hands.
-  for (let i = 0; i < hands.length; i++) {
-    let hand = hands[i];
-    if (showKeypoints) {
-      drawPoints(hand)
-      drawConnections(hand)
+noStroke();
+for (let i = 0; i < 100; i++) {
+  fill(255, random(20, 120));
+  circle(random(width), random(height), random(2, 5));
+}
+
+  // fingers we need
+  const tip   = hand.index_finger_tip;   // where we place stars
+  const pinky = hand.pinky_finger_tip;   // for live size
+  const thumb = hand.thumb_tip;
+  const middle = hand.middle_finger_tip;
+
+
+
+  // --- live size from pinky ↔ thumb distance ---
+  const d = dist(thumb.x, thumb.y, pinky.x, pinky.y);
+  let liveSize = map(d, 10, 220, 8, 48, true);
+  liveSize += sin(frameCount * 0.08) * 2;  
+
+  // 
+  const last = stars[stars.length - 1];
+  if (!frozen && (!last || dist(last.x, last.y, tip.x, tip.y) > 18)) {
+    stars.push({
+  x: tip.x,
+  y: tip.y,
+  scale: random(0.8, 1.4),
+  phase: random(TWO_PI) 
+});
+    if (stars.length > MAX_STARS) stars.shift();
+  }
+
+  // --- draw stars ---
+  push();
+  imageMode(CENTER);
+  noStroke();
+  for (let s of stars) {
+   let starSize = liveSize * (s.scale || 1);
+   starSize += sin(frameCount * 0.08 + (s.phase || 0)) * 2;  // ±2px twinkle
+
+    if (starImg) {
+      image(starImg, s.x, s.y, starSize, starSize);
+    } else {
+      fill(255);
+      circle(s.x, s.y, starSize);
     }
-    // console.log(hand);
-    let indexFingerTipX = hand.index_finger_tip.x;
-    let indexFingerTipY = hand.index_finger_tip.y;
-    /*
-    Start drawing on the hands here
-    */
-
-    // pinchCircle(hand)
-    fill(225, 225, 0);
-    ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
-
-    /*
-    Stop drawing on the hands here
-    */
   }
+  pop();
 
+  //connects
+push();
+blendMode(ADD);  
+strokeWeight(1.2);
+const start = max(0, stars.length - 100);
+for (let i = start; i < stars.length; i++) {
+  const a = stars[i];
+  for (let j = i - 12; j < i; j++) {  
+    if (j < 0) continue;
+    const b = stars[j];
+    const dd = dist(a.x, a.y, b.x, b.y);
+    if (dd < 140) {
+      const alpha = map(dd, 0, 140, 200, 0); 
 
+      // soft outer pass (bigger + faint)
+      stroke(200, alpha * 0.35);
+      strokeWeight(3);
+      line(a.x, a.y, b.x, b.y);
 
-  //------------------------------------------------------------
-  //facePart
-  // for loop to capture if there is more than one face on the screen. This applies the same process to all faces. 
-  for (let i = 0; i < faces.length; i++) {
-    let face = faces[i]; // face holds all the keypoints of the face
-    if (showKeypoints) {
-      drawPoints(face)
+      // crisp inner pass
+      stroke(255, alpha);
+      strokeWeight(1.2);
+      line(a.x, a.y, b.x, b.y);
     }
-    // console.log(face);
-    /*
-    Once this program has a face, it knows some things about it.
-    This includes how to draw a box around the face, and an oval. 
-    It also knows where the key points of the following parts are:
-     face.leftEye
-     face.leftEyebrow
-     face.lips
-     face.rightEye
-     face.rightEyebrow
-    */
-
-    /*
-    Start drawing on the face here
-    */
-
-    // fill(225, 225, 0);
-    // ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
-
-    drawPoints(face.leftEye);
-    drawPoints(face.leftEyebrow);
-    drawPoints(face.lips);
-    drawPoints(face.rightEye);
-    drawPoints(face.rightEyebrow);
-    /*
-    Stop drawing on the face here
-    */
-
   }
-  //------------------------------------------------------
-  // You can make addtional elements here, but keep the face drawing inside the for loop. 
 }
-
-
-function drawConnections(hand) {
-  // Draw the skeletal connections
-  push()
-  for (let j = 0; j < connections.length; j++) {
-    let pointAIndex = connections[j][0];
-    let pointBIndex = connections[j][1];
-    let pointA = hand.keypoints[pointAIndex];
-    let pointB = hand.keypoints[pointBIndex];
-    stroke(255, 0, 0);
-    strokeWeight(2);
-    line(pointA.x, pointA.y, pointB.x, pointB.y);
-  }
-  pop()
-}
-
-function pinchCircle(hand) { // adapted from https://editor.p5js.org/ml5/sketches/DNbSiIYKB
-  // Find the index finger tip and thumb tip
-  let finger = hand.index_finger_tip;
-  //let finger = hand.pinky_finger_tip;
-  let thumb = hand.thumb_tip;
-
-  // Draw circles at finger positions
-  let centerX = (finger.x + thumb.x) / 2;
-  let centerY = (finger.y + thumb.y) / 2;
-  // Calculate the pinch "distance" between finger and thumb
-  let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
-
-  // This circle's size is controlled by a "pinch" gesture
-  fill(0, 255, 0, 200);
-  stroke(0);
-  strokeWeight(2);
-  circle(centerX, centerY, pinch);
-
-}
-
-
-// This function draw's a dot on all the keypoints. It can be passed a whole face, or part of one. 
-function drawPoints(feature) {
-
-  push()
-  for (let i = 0; i < feature.keypoints.length; i++) {
-    let element = feature.keypoints[i];
-    noStroke();
-    fill(0, 255, 0);
-    circle(element.x, element.y, 5);
-  }
-  pop()
+pop();
 
 }

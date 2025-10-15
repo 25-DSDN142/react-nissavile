@@ -38,6 +38,7 @@ function drawInteraction(faces, hands) {
 
     drawSnowflake(indexFingerTipX, indexFingerTipY, 25);
 
+drawNeonTrail(indexFingerTipX, indexFingerTipY);
 
     // drawPoints(hand)
 
@@ -52,32 +53,72 @@ function drawInteraction(faces, hands) {
   // You can make addtional elements here, but keep the hand drawing inside the for loop. 
   //------------------------------------------------------
 }
-function drawSnowflake(x, y, size = 20) {
-  push();
-  translate(x, y);
-  rotate(frameCount * 0.01); // gentle spin
 
-  // glowing layers
-  stroke(180, 220, 255, 80); 
-  strokeWeight(3);
-  snowflakeArms(size * 1.1);
 
-  stroke(230, 240, 255, 200);
-  strokeWeight(1.5);
-  snowflakeArms(size);
+// store past positions of fingertip
+let trail = [];
 
-  pop();
-}
+function drawNeonTrail(x, y) {
+  // save current fingertip position
+  trail.push({x: x, y: y, t: frameCount});
 
-function snowflakeArms(size) {
-  for (let i = 0; i < 6; i++) {
-    rotate(PI / 3);
-    line(0, 0, size, 0);
-    // branchlets
-    line(size * 0.6, -2, size * 0.9, -2);
-    line(size * 0.6,  2, size * 0.9,  2);
+  // limit length of trail (keeps perf good)
+  if (trail.length > 80) {
+    trail.shift();
+  }
+
+  noFill();
+  strokeWeight(2);
+
+  // draw curved neon lines through trail
+  for (let i = 1; i < trail.length; i++) {
+    let p1 = trail[i-1];
+    let p2 = trail[i];
+
+    // colour shifts over time
+    let hue = (p2.t * 4) % 360; 
+    stroke(color(`hsla(${hue}, 100%, 60%, 0.8)`));
+
+    line(p1.x, p1.y, p2.x, p2.y);
   }
 }
+
+
+
+
+
+
+
+
+// function drawSnowflake(x, y, size = 20) {
+//   push();
+//   translate(x, y);
+  
+    
+//   }
+//   rotate(frameCount * 0.01); // gentle spin
+
+//   // glowing layers
+//   stroke(180, 220, 255, 80); 
+//   strokeWeight(3);
+//   snowflakeArms(size * 1.1);
+
+//   stroke(230, 240, 255, 200);
+//   strokeWeight(1.5);
+//   snowflakeArms(size);
+
+//   pop();
+// }
+
+// function snowflakeArms(size) {
+//   for (let i = 0; i < 6; i++) {
+//     rotate(PI / 3);
+//     line(0, 0, size, 0);
+//     // branchlets
+//     line(size * 0.6, -2, size * 0.9, -2);
+//     line(size * 0.6,  2, size * 0.9,  2);
+//   }
+// }
 
 
 // function flower(x,y) {
