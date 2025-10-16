@@ -1,5 +1,3 @@
-// ==== Constellation (fixed + interactive size) ====
-
 let stars = [];
 let starImg = null;
 const MAX_STARS = 90;
@@ -12,56 +10,55 @@ function prepareInteraction() {
 }
 
 function drawInteraction(faces, hands) {
-  // --- pick ONE hand (Right if available, else first) ---
+  // pick one hand (right if available)
   const hand = hands.find(h => h.handedness === "Right") || hands[0];
   if (!hand) return;
 
-  // background gradient
-for (let y = 0; y < height; y++) {
-  let inter = map(y, 0, height, 0, 1);
-  let c = lerpColor(color(5, 5, 20), color(40, 30, 70), inter);
-  stroke(c);
-  line(0, y, width, y);
-}
+  // ---- background gradient ----
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color(5, 5, 20), color(40, 30, 70), inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
 
-noStroke();
-for (let i = 0; i < 100; i++) {
-  fill(255, random(20, 120));
-  circle(random(width), random(height), random(2, 5));
-}
+  // ---- background stars ----
+  noStroke();
+  for (let i = 0; i < 100; i++) {
+    fill(255, random(20, 120));
+    circle(random(width), random(height), random(2, 5));
+  }
 
-  // fingers we need
-  const tip   = hand.index_finger_tip;   // where we place stars
-  const pinky = hand.pinky_finger_tip;   // for live size
+  // ---- hand landmarks ----
+  const tip = hand.index_finger_tip;
+  const pinky = hand.pinky_finger_tip;
   const thumb = hand.thumb_tip;
-  const middle = hand.middle_finger_tip;
 
-
-
-  // --- live size from pinky ↔ thumb distance ---
+  // ---- control star size with pinky ↔ thumb distance ----
   const d = dist(thumb.x, thumb.y, pinky.x, pinky.y);
   let liveSize = map(d, 10, 220, 8, 48, true);
-  liveSize += sin(frameCount * 0.08) * 2;  
+  liveSize += sin(frameCount * 0.08) * 2; // small pulsing motion
 
-  // 
+  // ---- create moving star trail ----
   const last = stars[stars.length - 1];
   if (!frozen && (!last || dist(last.x, last.y, tip.x, tip.y) > 18)) {
     stars.push({
-  x: tip.x,
-  y: tip.y,
-  scale: random(0.8, 1.4),
-  phase: random(TWO_PI) 
-});
+      x: tip.x,
+      y: tip.y,
+      scale: random(0.8, 1.4),
+      phase: random(TWO_PI),
+      t: frameCount
+    });
     if (stars.length > MAX_STARS) stars.shift();
   }
 
-  // --- draw stars ---
+  // ---- draw stars ----
   push();
   imageMode(CENTER);
   noStroke();
   for (let s of stars) {
-   let starSize = liveSize * (s.scale || 1);
-   starSize += sin(frameCount * 0.08 + (s.phase || 0)) * 2;  // ±2px twinkle
+    let starSize = liveSize * (s.scale || 1);
+    starSize += sin(frameCount * 0.08 + (s.phase || 0)) * 2; // twinkle
 
     if (starImg) {
       image(starImg, s.x, s.y, starSize, starSize);
@@ -72,26 +69,27 @@ for (let i = 0; i < 100; i++) {
   }
   pop();
 
-  //connects
+  // glowing constellation lines
 push();
-blendMode(ADD);  
+blendMode(ADD); 
 strokeWeight(1.2);
 const start = max(0, stars.length - 100);
 for (let i = start; i < stars.length; i++) {
   const a = stars[i];
-  for (let j = i - 12; j < i; j++) {  
+  for (let j = i - 12; j < i; j++) {
     if (j < 0) continue;
     const b = stars[j];
     const dd = dist(a.x, a.y, b.x, b.y);
-    if (dd < 140) {
-      const alpha = map(dd, 0, 140, 200, 0); 
 
-      // soft outer pass (bigger + faint)
+    if (dd < 140) {
+      const alpha = map(dd, 0, 140, 200, 0); // fade with distance
+
+      //outer
       stroke(200, alpha * 0.35);
       strokeWeight(3);
       line(a.x, a.y, b.x, b.y);
 
-      // crisp inner pass
+      //inner
       stroke(255, alpha);
       strokeWeight(1.2);
       line(a.x, a.y, b.x, b.y);
