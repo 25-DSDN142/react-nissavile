@@ -14,7 +14,7 @@ function drawInteraction(faces, hands) {
   const hand = hands.find(h => h.handedness === "Right") || hands[0];
   if (!hand) return;
 
-  // ---- background gradient ----
+  //background gradient
   for (let y = 0; y < height; y++) {
     let inter = map(y, 0, height, 0, 1);
     let c = lerpColor(color(5, 5, 20), color(40, 30, 70), inter);
@@ -22,24 +22,24 @@ function drawInteraction(faces, hands) {
     line(0, y, width, y);
   }
 
-  // ---- background stars ----
+  //background stars
   noStroke();
   for (let i = 0; i < 100; i++) {
     fill(255, random(20, 120));
     circle(random(width), random(height), random(2, 5));
   }
 
-  // ---- hand landmarks ----
+  // hand landmarks
   const tip = hand.index_finger_tip;
   const pinky = hand.pinky_finger_tip;
   const thumb = hand.thumb_tip;
 
-  // ---- control star size with pinky ↔ thumb distance ----
+  // control star size with pinky ↔ thumb distance
   const d = dist(thumb.x, thumb.y, pinky.x, pinky.y);
   let liveSize = map(d, 10, 220, 8, 48, true);
   liveSize += sin(frameCount * 0.08) * 2; // small pulsing motion
 
-  // ---- create moving star trail ----
+  // create moving star trail
   const last = stars[stars.length - 1];
   if (!frozen && (!last || dist(last.x, last.y, tip.x, tip.y) > 18)) {
     stars.push({
@@ -52,7 +52,7 @@ function drawInteraction(faces, hands) {
     if (stars.length > MAX_STARS) stars.shift();
   }
 
-  // ---- draw stars ----
+  // draw stars
   push();
   imageMode(CENTER);
   noStroke();
@@ -99,3 +99,5 @@ for (let i = start; i < stars.length; i++) {
 pop();
 
 }
+
+
